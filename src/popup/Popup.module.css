@@ -1,0 +1,132 @@
+.container {
+    width: 360px;
+    height: 200px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 2px solid var(--color-primary);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.brand {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-size: 14px;
+}
+
+.indicator {
+    color: var(--color-primary);
+    font-size: 10px;
+    animation: pulse 2s infinite;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.inputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+    transition: border-color 0.2s;
+}
+
+.inputWrapper:focus-within {
+    border-color: var(--color-primary);
+}
+
+.input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-text);
+    font-family: var(--font-family);
+    font-size: 14px;
+    width: 100%;
+}
+
+.input::placeholder {
+    color: #444;
+}
+
+.footer {
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.validation {
+    font-family: monospace;
+    font-size: 10px;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.submitButton {
+    background: transparent;
+    border: 1px solid #333;
+    color: #333;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.submitButton.active {
+    background: var(--color-primary);
+    color: var(--color-bg);
+    border-color: var(--color-primary);
+}
+
+/* Success State */
+.successMessage {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.successMessage h2 {
+    font-size: 24px;
+    margin: 0 0 8px 0;
+    color: var(--color-primary);
+}
+
+.subtext {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+    font-family: monospace;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

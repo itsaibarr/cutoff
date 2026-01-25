@@ -1,0 +1,40 @@
+{
+    "manifest_version": 3,
+    "name": "Cutoff - Decision Enforcer",
+    "version": "1.0.0",
+    "description": "An AI that forces you to choose: start, schedule, or let go.",
+    "permissions": [
+        "storage",
+        "sidePanel",
+        "activeTab",
+        "contextMenus",
+        "alarms",
+        "scripting",
+        "tabs"
+    ],
+    "host_permissions": [
+        "https://generativelanguage.googleapis.com/*",
+        "http://*/*",
+        "https://*/*"
+    ],
+    "background": {
+        "service_worker": "src/background/service-worker.ts",
+        "type": "module"
+    },
+    "action": {
+        "default_title": "Open Cutoff"
+    },
+    "side_panel": {
+        "default_path": "sidepanel.html"
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "assets/*"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}
