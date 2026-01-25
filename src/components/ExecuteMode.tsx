@@ -132,8 +132,8 @@ export default function ExecuteMode({ card, onStop, onAbort, onStartTimer, onUpd
                     setBreachDetected(false);
                     setBreachSite('');
                 }
-            } catch (e) {
-                console.error('Focus check failed', e);
+            } catch {
+                // Ignore errors during focus check
             }
         };
 

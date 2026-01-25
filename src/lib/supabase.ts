@@ -14,11 +14,8 @@ export interface SystemSnapshot {
 
 export async function syncSystemState(sessionId: string, snapshot: SystemSnapshot) {
     if (!supabaseUrl || !supabaseAnonKey) {
-        console.warn('Supabase Sync Skipped: Missing credentials');
         return;
     }
-
-    console.log(`[SYNC] Triggered for session ${sessionId.substring(0, 8)}...`);
 
     try {
         // 1. Get or Create Profile

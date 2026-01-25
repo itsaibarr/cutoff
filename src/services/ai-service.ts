@@ -10,7 +10,7 @@ export interface AIAnalysisResult {
 
 interface GeminiModel {
     name: string;
-    supportedGenerationMethods?: string[];
+    supportedGenerationMethods: string[];
 }
 
 const API_STORAGE_KEY = 'cutoff_gemini_api_key';
@@ -18,7 +18,6 @@ const API_STORAGE_KEY = 'cutoff_gemini_api_key';
 export class AIService {
     private static instance: AIService;
     private apiKey: string | null = null;
-    private displayedModel: string | null = null;
 
     private constructor() { }
 
@@ -125,42 +124,41 @@ export class AIService {
 
     private async callGemini(prompt: string, key: string, fileData?: { mimeType: string, data: string }): Promise<AIAnalysisResult> {
         const modelName = await this.getWorkingModel(key);
-        console.log(`Selected Gemini Model: ${modelName}`);
-
         return await this.tryModel(modelName, prompt, key, fileData);
     }
 
     private async getWorkingModel(key: string): Promise<string> {
-        if (this.displayedModel) return this.displayedModel;
-
         try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`;
+            const response = await fetch(listUrl);
+
             if (!response.ok) {
-                console.warn('ListModels failed, falling back to gemini-pro');
-                return 'gemini-pro';
+                return 'gemini-1.5-flash';
             }
 
             const data = await response.json();
-            const candidates = (data.models || []).filter((m: GeminiModel) =>
+            const models = (data.models || []) as GeminiModel[];
+
+            // Find the first model that supports content generation and looks like a stable gemini model
+            // Priority: 1.5-flash -> 1.5-pro -> 1.0-pro -> any gemini
+            const candidates = models.filter((m) =>
                 m.supportedGenerationMethods?.includes('generateContent') &&
-                m.name.includes('gemini')
+                m.name.includes('models/gemini')
             );
 
-            if (candidates.length === 0) return 'gemini-pro';
+            if (candidates.length === 0) return 'gemini-1.5-flash';
 
-            // Priority: Flash 1.5 -> Flash -> Pro 1.5 -> Pro 1.0 -> Any
-            const flash15 = candidates.find((m: GeminiModel) => m.name.includes('1.5-flash'));
-            const pro15 = candidates.find((m: GeminiModel) => m.name.includes('1.5-pro'));
-            const pro10 = candidates.find((m: GeminiModel) => m.name.includes('gemini-pro'));
+            const flash15 = candidates.find((m) => m.name.includes('1.5-flash'));
+            const pro15 = candidates.find((m) => m.name.includes('1.5-pro'));
+            const pro10 = candidates.find((m) => m.name.includes('pro'));
 
             const selected = flash15 || pro15 || pro10 || candidates[0];
             const cleanName = selected.name.replace('models/', '');
 
-            this.displayedModel = cleanName;
             return cleanName;
-        } catch (e) {
-            console.warn('Model auto-discovery error:', e);
-            return 'gemini-pro';
+
+        } catch {
+            return 'gemini-1.5-flash';
         }
     }
 

@@ -1,11 +1,21 @@
 :root {
-    /* Colors */
+    /* Base Variables (Default = VOID/BLACK) */
     --color-bg: #000000;
-    --color-primary: #BFFF00;
-    /* Neon Lime */
+    --color-surface: #111111;
+    /* Slightly lighter for cards */
+
+    /* Dynamic Accent (Default: LIME) */
+    --color-accent: #d9ff00;
+    --color-accent-dim: rgba(217, 255, 0, 0.1);
+
+    /* Legacy mapping for backward match */
+    --color-primary: var(--color-accent);
+    --color-primary-dim: var(--color-accent-dim);
+
     --color-text: #FFFFFF;
-    --color-text-dim: #888888;
+    --color-text-dim: #a7a7a7;
     --color-danger: #FF3333;
+    --color-border: #333333;
 
     /* Typography */
     --font-family: 'Inter', -apple-system, system-ui, sans-serif;
@@ -13,9 +23,26 @@
     /* Spacing */
     --space-sm: 8px;
     --space-md: 16px;
-
-    /* Borders */
     --border-width: 1px;
+}
+
+/* THEME: DARK (Charcoal/Soft) */
+[data-theme='dark'] {
+    --color-bg: #121212;
+    --color-surface: #1E1E1E;
+    --color-text: #E0E0E0;
+    --color-text-dim: #888888;
+    --color-border: #2C2C2C;
+}
+
+/* THEME: FLUX (Custom/Cyber) */
+[data-theme='flux'] {
+    --color-bg: #050510;
+    /* Deep Navy */
+    --color-surface: #0a0a1a;
+    --color-text: #edfaff;
+    --color-text-dim: #6c7c93;
+    --color-border: #1a1a3a;
 }
 
 body {
@@ -45,10 +72,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #515151;
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #afafaf;
 }

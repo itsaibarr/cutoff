@@ -1,7 +1,8 @@
 /* Container */
 .container {
     height: 100vh;
-    background: var(--color-bg);
+    background: transparent;
+    /* Changed to transparent to show Atmosphere */
     color: var(--color-text);
     padding: 16px;
     display: flex;
@@ -21,69 +22,34 @@
     height: 150px;
     pointer-events: none;
     transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 0;
+    z-index: 1;
+    /* Above atmosphere */
     opacity: 0.5;
 }
 
 .state_void {
-    background: #020202;
-}
-
-.state_void::before {
-    background: radial-gradient(circle at top, #080808, transparent 70%);
-    opacity: 0.2;
+    background: rgba(0, 0, 0, 0.8);
 }
 
 .state_stable {
-    background: #050505;
-}
-
-.state_stable::before {
-    background: radial-gradient(circle at top, #111, transparent 80%);
+    background: rgba(5, 5, 5, 0.5);
 }
 
 .state_turbulent {
-    background: #080800;
-}
-
-.state_turbulent::before {
-    background: radial-gradient(circle at top, rgba(191, 255, 0, 0.15), transparent 90%);
+    background: rgba(8, 8, 0, 0.6);
 }
 
 .state_critical {
-    background: #0a0000;
+    background: rgba(10, 0, 0, 0.7);
     animation: criticalBg 4s infinite alternate ease-in-out;
 }
 
-.state_critical::before {
-    background: radial-gradient(circle at top, rgba(255, 0, 0, 0.25), transparent 100%);
-    opacity: 0.8;
-}
-
-@keyframes criticalBg {
-    from {
-        box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.05);
-    }
-
-    to {
-        box-shadow: inset 0 0 80px rgba(255, 0, 0, 0.1);
-    }
-}
-
 .state_focused {
-    background: #000808;
-}
-
-.state_focused::before {
-    background: radial-gradient(circle at top, rgba(0, 255, 255, 0.2), transparent 100%);
+    background: rgba(0, 8, 8, 0.7);
 }
 
 .state_deferred {
-    background: #080500;
-}
-
-.state_deferred::before {
-    background: radial-gradient(circle at top, rgba(150, 80, 0, 0.15), transparent 90%);
+    background: rgba(8, 5, 0, 0.6);
 }
 
 .header {
@@ -124,9 +90,9 @@
 }
 
 .filterButtonActive {
-    background: var(--color-primary) !important;
+    background: #d9ff00 !important;
     color: #000 !important;
-    border-color: var(--color-primary) !important;
+    border-color: #d9ff00 !important;
 }
 
 .character {
@@ -178,8 +144,8 @@
 }
 
 .turbulent {
-    color: var(--color-primary);
-    text-shadow: 0 0 12px rgba(191, 255, 0, 0.3);
+    color: #d9ff00;
+    text-shadow: 0 0 12px rgba(217, 255, 0, 0.3);
 }
 
 .critical {
@@ -204,7 +170,7 @@
     }
 
     50% {
-        opacity: 0.7;
+        opacity: 0.6;
     }
 
     100% {
@@ -643,4 +609,248 @@
 .discardButton:hover {
     border-color: #666 !important;
     color: #999;
+}
+
+.settingsToggle {
+    background: transparent;
+    border: none;
+    color: #444;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.settingsToggle:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.settingsOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    z-index: 200;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.settingsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.settingsHeader h2 {
+    font-family: monospace;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: #444;
+    margin: 0;
+}
+
+.closeBtn {
+    background: transparent;
+    border: none;
+    color: #444;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.closeBtn:hover {
+    color: #fff;
+}
+
+.pairingSection {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+}
+
+.pairedStatus {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.successIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 2px solid #00ff88;
+    color: #00ff88;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.pairedStatus p {
+    font-family: monospace;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: #888;
+}
+
+.unlinkBtn {
+    background: transparent;
+    border: 1px solid #333;
+    color: #444;
+    padding: 10px 20px;
+    font-family: monospace;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.unlinkBtn:hover {
+    border-color: #ff4444;
+    color: #ff4444;
+}
+
+.pairingForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pairingHint {
+    font-size: 12px;
+    color: #444;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.pairingInput {
+    background: #0a0a0a;
+    border: 1px solid #111;
+    padding: 16px;
+    color: #d9ff00;
+    font-family: monospace;
+    font-size: 20px;
+    letter-spacing: 0.4em;
+    text-align: center;
+    outline: none;
+    box-shadow: inset 0 0 10px rgba(217, 255, 0, 0.05);
+}
+
+.pairBtn {
+    background: transparent;
+    color: #d9ff00;
+    border: 1px solid #d9ff00;
+    padding: 16px;
+    font-family: monospace;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pairBtn:hover:not(:disabled) {
+    background: #d9ff00;
+    color: #000;
+}
+
+.pairBtn:disabled {
+    opacity: 0.3;
+}
+
+.statusMsg {
+    font-size: 11px;
+    font-family: monospace;
+    padding: 8px;
+}
+
+.error {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.05);
+}
+
+.success {
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.05);
+}
+
+/* Theme Selector */
+.themeSection {
+    margin-top: 32px;
+    border-top: 1px solid #222;
+    padding-top: 24px;
+}
+
+.themeTitle {
+    font-family: monospace;
+    font-size: 11px;
+    color: #444;
+    margin-bottom: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.themeGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.themeBtn {
+    background: transparent;
+    border: 1px solid #333;
+    color: #666;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 10px;
+    font-family: monospace;
+    transition: all 0.2s;
+}
+
+.themeBtn:hover {
+    border-color: #555;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.themeBtnActive {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.themePreview {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid #444;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Theme Preview Bubbles */
+.previewVoid {
+    background: #000;
+    border-color: #333;
+}
+
+.previewDark {
+    background: #121212;
+    border-color: #444;
+}
+
+.previewFlux {
+    background: #050510;
+    border-color: #00f0ff;
 }

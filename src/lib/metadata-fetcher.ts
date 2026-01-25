@@ -41,8 +41,7 @@ export async function fetchPageMetadata(url: string): Promise<{ title?: string, 
             description,
             rawText
         };
-    } catch (error) {
-        console.error('Metadata fetch error:', error);
+    } catch {
         return { error: 'Failed to fetch URL' };
     }
 }

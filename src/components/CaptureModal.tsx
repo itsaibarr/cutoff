@@ -87,8 +87,8 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
                             payload = injection[0].result as ExtractionPayload;
                         }
                     }
-                } catch (err) {
-                    console.warn('Failed to extract page content:', err);
+                } catch {
+                    // Ignore content extraction failures
                 }
 
                 if (payload) {
@@ -142,15 +142,13 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
             setShowApiKeyInput(false);
 
         } catch (error) {
-            console.error('Analysis failed:', error);
             const err = error as Error;
-
             if (err.message === 'API_KEY_MISSING') {
                 setShowApiKeyInput(true);
             } else {
                 setAnalyzedData({
                     title: 'Analysis Error',
-                    summary: `DEBUG INFO:\n${err.message}\n\nCheck console for details.`
+                    summary: 'System communication failed. Try again or check your connection.'
                 });
             }
         } finally {

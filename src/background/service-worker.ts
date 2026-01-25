@@ -1,4 +1,5 @@
 /// <reference types="chrome"/>
+import { storage } from '../lib/storage';
 import type { Card } from '../lib/types';
 
 // Open Side Panel on extension icon click
@@ -37,18 +38,19 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }
 
         if (content) {
-            const result = await chrome.storage.local.get("cutoff_cards");
-            const cards = (result["cutoff_cards"] as Card[]) || [];
-            const newCard = {
+            const cards = (await storage.get<Card[]>("cutoff_cards")) || [];
+            const newCard: Card = {
                 id: crypto.randomUUID(),
                 state: "uncommitted",
                 sourceType: type,
                 sourceContent: content,
                 platformName,
                 createdAt: Date.now(),
+                totalConfrontations: 0,
+                executeDuration: 15,
             };
 
-            await chrome.storage.local.set({ cutoff_cards: [newCard, ...cards] });
+            await storage.set("cutoff_cards", [newCard, ...cards]);
 
             // Open Side Panel to show the saved card
             if (tab?.id) {
@@ -57,11 +59,3 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }
     }
 });
-
-// TODO: Implement Chrome Alarms for delayed confrontations
-// chrome.alarms.onAlarm.addListener((alarm) => {
-//   if (alarm.name.startsWith('confront_')) {
-//     const cardId = alarm.name.replace('confront_', '');
-//     // Trigger confrontation UI
-//   }
-// });

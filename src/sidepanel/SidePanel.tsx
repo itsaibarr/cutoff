@@ -2,13 +2,19 @@
 import { useEffect, useState, useMemo } from 'react';
 import styles from './SidePanel.module.css';
 import { useCardStore } from '../store/card-store';
+import { supabase } from '../lib/supabase';
+import { storage } from '../lib/storage';
 import { formatTimeSince, calculateSystemState } from '../lib/types';
 import type { Card, Category } from '../lib/types';
 import clsx from 'clsx';
-import { Trash, Play, Clock, AlertTriangle, Plus, Sparkles, BarChart3 } from 'lucide-react';
+import {
+    BarChart3, Clock, Sparkles, Key,
+    Trash, Play, AlertTriangle, Plus
+} from 'lucide-react';
 import ExecuteMode from '../components/ExecuteMode';
 import CaptureModal from '../components/CaptureModal';
 import OnboardingGuide from '../components/OnboardingGuide';
+import Atmosphere from '../components/Atmosphere';
 
 type ConfrontationStep = 'gate' | 'reality' | 'decision';
 
@@ -31,6 +37,12 @@ export default function SidePanel() {
 
     const [activeCardId, setActiveCardId] = useState<string | null>(null);
     const [confrontationStep, setConfrontationStep] = useState<ConfrontationStep>('gate');
+    const [view, setView] = useState<'list' | 'settings'>('list');
+
+    // Pairing State
+    const [pairingCodeInput, setPairingCodeInput] = useState('');
+    const [pairingStatus, setPairingStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error', message?: string }>({ type: 'idle' });
+    const [isPaired, setIsPaired] = useState(false);
 
     // Filtering
     const [activeFilter, setActiveFilter] = useState<string>('All');
@@ -40,6 +52,10 @@ export default function SidePanel() {
 
     // Onboarding State
     const [showOnboarding, setShowOnboarding] = useState(false);
+
+    // Theme State
+    const [theme, setTheme] = useState<'void' | 'dark' | 'flux'>('void');
+    const [accentColor, setAccentColor] = useState<string>('#d9ff00');
 
     useEffect(() => {
         loadCards();
@@ -53,12 +69,76 @@ export default function SidePanel() {
         };
         checkOnboarding();
 
+        // Load theme and accent
+        storage.get<'void' | 'dark' | 'flux'>('cutoff_theme').then(savedTheme => {
+            if (savedTheme) {
+                setTheme(savedTheme);
+                document.documentElement.setAttribute('data-theme', savedTheme);
+            }
+        });
+
+        storage.get<string>('cutoff_accent').then(savedAccent => {
+            if (savedAccent) {
+                setAccentColor(savedAccent);
+                applyAccent(savedAccent);
+            }
+        });
+
+        // Check pairing status
+        storage.get<string>('cutoff_profile_id').then(id => {
+            const paired = !!id;
+            setIsPaired(paired);
+            if (!paired) setView('settings');
+        });
+
         if (typeof chrome !== 'undefined' && chrome.storage) {
             const listener = () => loadCards();
             chrome.storage.onChanged.addListener(listener);
             return () => chrome.storage.onChanged.removeListener(listener);
         }
     }, [loadCards]);
+
+    // Computed Metrics
+    const systemState = useMemo(() => calculateSystemState(cards), [cards]);
+    const globalCount = cards.length;
+    const openLoopCount = useMemo(() =>
+        cards.filter(c => ['uncommitted', 'shadowed', 'executed'].includes(c.state)).length,
+        [cards]
+    );
+
+    // SYSTEM MIRROR SYNC
+    useEffect(() => {
+        if (!isPaired) return;
+
+        const syncToMirror = async () => {
+            try {
+                const profileId = await storage.get<string>('cutoff_profile_id');
+                if (!profileId) return;
+
+                const currentState = calculateSystemState(cards);
+                const totalCaptures = cards.length;
+                const openLoops = cards.filter(c => ['uncommitted', 'shadowed', 'executed'].includes(c.state)).length;
+                const shadowedCount = cards.filter(c => c.state === 'shadowed').length;
+
+                await supabase
+                    .from('system_current')
+                    .upsert({
+                        profile_id: profileId,
+                        system_state: currentState,
+                        total_captures: totalCaptures,
+                        open_loops: openLoops,
+                        shadowed_count: shadowedCount,
+                        last_updated: new Date().toISOString()
+                    }, { onConflict: 'profile_id' });
+
+            } catch {
+                // Ignore sync errors in background
+            }
+        };
+
+        const timer = setTimeout(syncToMirror, 1000);
+        return () => clearTimeout(timer);
+    }, [cards, isPaired]);
 
     const handleOnboardingComplete = async () => {
         await chrome.storage.local.set({ 'cutoff_onboarding_complete': true });
@@ -74,11 +154,6 @@ export default function SidePanel() {
     }, [cards, activeFilter]);
 
     const activeCard = useMemo(() => cards.find(c => c.id === activeCardId), [cards, activeCardId]);
-    const systemState = useMemo(() => calculateSystemState(cards), [cards]);
-    const globalCount = cards.length;
-    const openLoopCount = useMemo(() =>
-        cards.filter(c => c.state === 'uncommitted' || c.state === 'shadowed' || c.state === 'executed').length,
-        [cards]);
 
     const timeSinceCreation = useMemo(() =>
         activeCard ? formatTimeSince(activeCard.createdAt) : '',
@@ -131,6 +206,48 @@ export default function SidePanel() {
 
     const handleSaveCapture = async (content: string, type: 'url' | 'text' | 'file', platform?: string, title?: string, aiSummary?: string, category?: string) => {
         await addCard(content, type, platform, title, title, aiSummary, category as Category);
+    };
+
+    const handlePairing = async () => {
+        if (!pairingCodeInput) return;
+        setPairingStatus({ type: 'loading' });
+
+        try {
+            // Updated to use Secure RPC to bypass RLS for anonymous extension
+            const { data, error } = await supabase
+                .rpc('verify_pairing_code', { input_code: pairingCodeInput.toUpperCase() });
+
+            if (error || !data) throw new Error('Invalid code. Check your dashboard.');
+
+            await storage.set('cutoff_profile_id', data);
+            setIsPaired(true);
+            setPairingStatus({ type: 'success', message: 'Successfully paired!' });
+            setTimeout(() => setView('list'), 1500);
+        } catch (err: unknown) {
+            const message = err instanceof Error ? err.message : 'Unknown error during pairing';
+            setPairingStatus({ type: 'error', message: message });
+        }
+    };
+
+    const handleThemeChange = async (newTheme: 'void' | 'dark' | 'flux') => {
+        setTheme(newTheme);
+        document.documentElement.setAttribute('data-theme', newTheme);
+        await storage.set('cutoff_theme', newTheme);
+    };
+
+    const applyAccent = (color: string) => {
+        document.documentElement.style.setProperty('--color-accent', color);
+        // Create an RGBA version for the dim background
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
+        document.documentElement.style.setProperty('--color-accent-dim', `rgba(${r}, ${g}, ${b}, 0.1)`);
+    };
+
+    const handleAccentChange = async (color: string) => {
+        setAccentColor(color);
+        applyAccent(color);
+        await storage.set('cutoff_accent', color);
     };
 
     // --- EXECUTE MODE ---
@@ -231,6 +348,7 @@ export default function SidePanel() {
 
     return (
         <div className={clsx(styles.container, styles[`state_${systemState}`])}>
+            <Atmosphere theme={theme} />
             {showOnboarding && <OnboardingGuide onComplete={handleOnboardingComplete} />}
             <CaptureModal
                 isOpen={isCaptureOpen}
@@ -252,6 +370,13 @@ export default function SidePanel() {
                     >
                         <BarChart3 size={14} aria-hidden="true" />
                     </a>
+                    <button
+                        onClick={() => setView(view === 'list' ? 'settings' : 'list')}
+                        className={styles.settingsToggle}
+                        aria-label="Toggle Settings"
+                    >
+                        {view === 'list' ? <Key size={14} /> : <Sparkles size={14} />}
+                    </button>
                 </div>
                 <div className={styles.metrics}>
                     <span className={styles.globalCount}>{globalCount}</span>
@@ -344,6 +469,108 @@ export default function SidePanel() {
                     ))
                 )}
             </div>
+            {/* SETTINGS / PAIRING OVERLAY */}
+            {view === 'settings' && (
+                <div className={styles.settingsOverlay}>
+                    <div className={styles.settingsHeader}>
+                        <h2>SYSTEM LINK</h2>
+                        <button onClick={() => setView('list')} className={styles.closeBtn}>×</button>
+                    </div>
+
+                    <div className={styles.pairingSection}>
+                        {isPaired ? (
+                            <div className={styles.pairedStatus}>
+                                <div className={styles.successIcon}>✓</div>
+                                <p>ENCRYPTED_LINK_ACTIVE</p>
+                                <button
+                                    onClick={async () => {
+                                        await storage.remove('cutoff_profile_id');
+                                        setIsPaired(false);
+                                    }}
+                                    className={styles.unlinkBtn}
+                                >
+                                    TERMINATE_LINK
+                                </button>
+                            </div>
+                        ) : (
+                            <div className={styles.pairingForm}>
+                                <p className={styles.pairingHint}>ENTER_USER_NUMBER_FOR_SYNC</p>
+                                <input
+                                    type="text"
+                                    placeholder="USER_NUMBER"
+                                    className={styles.pairingInput}
+                                    value={pairingCodeInput}
+                                    onChange={(e) => setPairingCodeInput(e.target.value.toUpperCase())}
+                                />
+                                {pairingStatus.message && (
+                                    <div className={clsx(styles.statusMsg, styles[pairingStatus.type])}>
+                                        {pairingStatus.message}
+                                    </div>
+                                )}
+                                <button
+                                    onClick={handlePairing}
+                                    className={styles.pairBtn}
+                                    disabled={pairingStatus.type === 'loading'}
+                                >
+                                    {pairingStatus.type === 'loading' ? 'INITIALIZING...' : 'ESTABLISH_LINK'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* THEME SELECTOR */}
+                    <div className={styles.themeSection}>
+                        <div className={styles.themeTitle}>ATMOSPHERE_VISUALIZER</div>
+                        <div className={styles.themeGrid}>
+                            <button
+                                onClick={() => handleThemeChange('void')}
+                                className={clsx(styles.themeBtn, theme === 'void' && styles.themeBtnActive)}
+                            >
+                                <div className={clsx(styles.themePreview, styles.previewVoid)} />
+                                VOID
+                            </button>
+                            <button
+                                onClick={() => handleThemeChange('dark')}
+                                className={clsx(styles.themeBtn, theme === 'dark' && styles.themeBtnActive)}
+                            >
+                                <div className={clsx(styles.themePreview, styles.previewDark)} />
+                                DARK
+                            </button>
+                            <button
+                                onClick={() => handleThemeChange('flux')}
+                                className={clsx(styles.themeBtn, theme === 'flux' && styles.themeBtnActive)}
+                            >
+                                <div className={clsx(styles.themePreview, styles.previewFlux)} />
+                                FLUX
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* ACCENT SELECTOR */}
+                    <div className={styles.themeSection} style={{ borderTop: 'none', marginTop: 0 }}>
+                        <div className={styles.themeTitle}>ACCENT_TONE</div>
+                        <div className={styles.themeGrid} style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                            {[
+                                { name: 'LIME', hex: '#d9ff00' },
+                                { name: 'CYAN', hex: '#00f0ff' },
+                                { name: 'PURPLE', hex: '#bf00ff' },
+                                { name: 'RED', hex: '#ff3333' },
+                                { name: 'ORANGE', hex: '#ffaa00' }
+                            ].map(tone => (
+                                <button
+                                    key={tone.hex}
+                                    onClick={() => handleAccentChange(tone.hex)}
+                                    className={clsx(styles.themeBtn, accentColor === tone.hex && styles.themeBtnActive)}
+                                    style={{ padding: '8px 4px' }}
+                                >
+                                    <div className={styles.themePreview} style={{ background: tone.hex, borderColor: 'rgba(255,255,255,0.1)' }} />
+                                    <span style={{ fontSize: '8px' }}>{tone.name}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

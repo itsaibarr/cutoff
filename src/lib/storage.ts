@@ -28,5 +28,25 @@ export const storage = {
         } else {
             localStorage.removeItem(key);
         }
+    },
+
+    watch: <T>(key: string, callback: (value: T) => void): (() => void) => {
+        if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+            const listener = (changes: { [key: string]: chrome.storage.StorageChange }) => {
+                if (changes[key]) {
+                    callback(changes[key].newValue as T);
+                }
+            };
+            chrome.storage.onChanged.addListener(listener);
+            return () => chrome.storage.onChanged.removeListener(listener);
+        } else {
+            const listener = (e: StorageEvent) => {
+                if (e.key === key) {
+                    callback(e.newValue ? JSON.parse(e.newValue) : null);
+                }
+            };
+            window.addEventListener('storage', listener);
+            return () => window.removeEventListener('storage', listener);
+        }
     }
 };

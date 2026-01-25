@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Card, Decision, SourceType, Category } from '../lib/types';
 import { storage } from '../lib/storage';
 import { calculateSystemState } from '../lib/types';
-import { syncSystemState } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 const STORAGE_KEY = 'cutoff_cards';
 const DEFAULT_EXECUTE_DURATION = 15; // minutes
@@ -156,23 +156,7 @@ export const useCardStore = create<CardStore>((set, get) => ({
         await storage.set(STORAGE_KEY, updatedCards);
 
         // Sync Trigger
-        const systemState = calculateSystemState(updatedCards);
-        const openLoops = updatedCards.filter(c => ['uncommitted', 'shadowed', 'executed'].includes(c.state)).length;
-        const shadowedCount = updatedCards.filter(c => c.state === 'shadowed').length;
-
-        // Use a consistent session ID across extension contexts
-        let sessionId = localStorage.getItem('cutoff_session_id');
-        if (!sessionId) {
-            sessionId = uuidv4();
-            localStorage.setItem('cutoff_session_id', sessionId);
-        }
-
-        syncSystemState(sessionId, {
-            system_state: systemState,
-            total_captures: updatedCards.length,
-            open_loops: openLoops,
-            shadowed_count: shadowedCount
-        });
+        await get()._syncToCloud(updatedCards);
     },
 
     // DISCARD: Close loop forever
@@ -262,19 +246,36 @@ export const useCardStore = create<CardStore>((set, get) => ({
     },
 
     // Internal Cloud Sync Trigger
-    _syncToCloud: (updatedCards: Card[]) => {
+    _syncToCloud: async (updatedCards: Card[]) => {
         const systemState = calculateSystemState(updatedCards);
         const openLoops = updatedCards.filter(c => ['uncommitted', 'shadowed', 'executed'].includes(c.state)).length;
         const shadowedCount = updatedCards.filter(c => c.state === 'shadowed').length;
 
-        const sessionId = localStorage.getItem('cutoff_session_id') || uuidv4();
-        localStorage.setItem('cutoff_session_id', sessionId);
+        // 1. Get the paired Profile ID
+        const profileId = await storage.get<string>('cutoff_profile_id');
+        if (!profileId) {
+            return;
+        }
 
-        syncSystemState(sessionId, {
+        // 2. Sync to Current State (Upsert)
+        await supabase
+            .from('system_current')
+            .upsert({
+                profile_id: profileId,
+                system_state: systemState,
+                total_captures: updatedCards.length,
+                open_loops: openLoops,
+                shadowed_count: shadowedCount,
+                last_updated: new Date().toISOString()
+            }, { onConflict: 'profile_id' });
+
+
+        // 3. Periodic Snapshot
+        await supabase.from('system_snapshots').insert({
+            profile_id: profileId,
             system_state: systemState,
             total_captures: updatedCards.length,
-            open_loops: openLoops,
-            shadowed_count: shadowedCount
+            open_loops: openLoops
         });
     }
 }));
