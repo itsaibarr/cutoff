@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { v4 as uuidv4 } from 'uuid';
 import type { Card, Decision, SourceType, Category } from '../lib/types';
 import { storage } from '../lib/storage';
+import { calculateSystemState } from '../lib/types';
+import { syncSystemState } from '../lib/supabase';
 
 const STORAGE_KEY = 'cutoff_cards';
 const DEFAULT_EXECUTE_DURATION = 15; // minutes
@@ -34,6 +36,9 @@ interface CardStore {
     getCard: (id: string) => Card | undefined;
     getActiveCards: () => Card[];
     getOpenLoopCount: () => number;
+
+    // Internal
+    _syncToCloud: (updatedCards: Card[]) => void;
 }
 
 export const useCardStore = create<CardStore>((set, get) => ({
@@ -50,6 +55,9 @@ export const useCardStore = create<CardStore>((set, get) => ({
             totalConfrontations: card.totalConfrontations || 0,
         } as Card));
         set({ cards: cleanCards, isLoading: false });
+
+        // Force a cloud sync on load to ensure the mirror is warm
+        get()._syncToCloud(cleanCards);
     },
 
     addCard: async (sourceContent, sourceType, platformName, extractedTitle, aiTitle, aiSummary, category) => {
@@ -71,6 +79,7 @@ export const useCardStore = create<CardStore>((set, get) => ({
         const updatedCards = [newCard, ...get().cards];
         set({ cards: updatedCards });
         await storage.set(STORAGE_KEY, updatedCards);
+        get()._syncToCloud(updatedCards);
     },
 
     deleteCard: async (id) => {
@@ -78,6 +87,7 @@ export const useCardStore = create<CardStore>((set, get) => ({
         const updatedCards = cards.filter(c => c.id !== id);
         set({ cards: updatedCards });
         await storage.set(STORAGE_KEY, updatedCards);
+        get()._syncToCloud(updatedCards);
     },
 
     // Confrontation: local state only, not persisted
@@ -144,6 +154,25 @@ export const useCardStore = create<CardStore>((set, get) => ({
         );
         set({ cards: updatedCards });
         await storage.set(STORAGE_KEY, updatedCards);
+
+        // Sync Trigger
+        const systemState = calculateSystemState(updatedCards);
+        const openLoops = updatedCards.filter(c => ['uncommitted', 'shadowed', 'executed'].includes(c.state)).length;
+        const shadowedCount = updatedCards.filter(c => c.state === 'shadowed').length;
+
+        // Use a consistent session ID across extension contexts
+        let sessionId = localStorage.getItem('cutoff_session_id');
+        if (!sessionId) {
+            sessionId = uuidv4();
+            localStorage.setItem('cutoff_session_id', sessionId);
+        }
+
+        syncSystemState(sessionId, {
+            system_state: systemState,
+            total_captures: updatedCards.length,
+            open_loops: openLoops,
+            shadowed_count: shadowedCount
+        });
     },
 
     // DISCARD: Close loop forever
@@ -231,4 +260,21 @@ export const useCardStore = create<CardStore>((set, get) => ({
             c.state === 'executed'
         ).length;
     },
+
+    // Internal Cloud Sync Trigger
+    _syncToCloud: (updatedCards: Card[]) => {
+        const systemState = calculateSystemState(updatedCards);
+        const openLoops = updatedCards.filter(c => ['uncommitted', 'shadowed', 'executed'].includes(c.state)).length;
+        const shadowedCount = updatedCards.filter(c => c.state === 'shadowed').length;
+
+        const sessionId = localStorage.getItem('cutoff_session_id') || uuidv4();
+        localStorage.setItem('cutoff_session_id', sessionId);
+
+        syncSystemState(sessionId, {
+            system_state: systemState,
+            total_captures: updatedCards.length,
+            open_loops: openLoops,
+            shadowed_count: shadowedCount
+        });
+    }
 }));

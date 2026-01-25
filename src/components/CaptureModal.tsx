@@ -196,12 +196,12 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
             <div className={styles.overlay}>
                 <div className={styles.modal}>
                     <div className={styles.header}>
-                        <div className={styles.title} style={{ color: 'var(--color-primary)' }}>
-                            <Key size={14} style={{ display: 'inline', marginRight: 8 }} />
+                        <h2 className={styles.title} style={{ color: 'var(--color-primary)' }}>
+                            <Key size={14} style={{ display: 'inline', marginRight: 8 }} aria-label="Security Key" />
                             SETUP AI
-                        </div>
-                        <button onClick={() => setShowApiKeyInput(false)} className={styles.closeButton}>
-                            <X size={16} />
+                        </h2>
+                        <button onClick={() => setShowApiKeyInput(false)} className={styles.closeButton} aria-label="Close API Setup">
+                            <X size={16} aria-hidden="true" />
                         </button>
                     </div>
                     <div className={styles.body}>
@@ -237,12 +237,12 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
         <div className={styles.overlay}>
             <div className={styles.modal}>
                 <div className={styles.header}>
-                    <div className={styles.title}>
-                        <Sparkles size={14} style={{ display: 'inline', marginRight: 8 }} />
+                    <h1 className={styles.title}>
+                        <Sparkles size={14} style={{ display: 'inline', marginRight: 8 }} aria-label="AI insight" />
                         Smart Capture
-                    </div>
-                    <button onClick={onClose} className={styles.closeButton}>
-                        <X size={16} />
+                    </h1>
+                    <button onClick={onClose} className={styles.closeButton} aria-label="Close Capture Modal">
+                        <X size={16} aria-hidden="true" />
                     </button>
                 </div>
 
@@ -250,22 +250,25 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
                     <button
                         className={clsx(styles.tab, activeTab === 'link' && styles.activeTab)}
                         onClick={() => { setActiveTab('link'); setAnalyzedData(null); }}
+                        aria-label="Capture from Link"
                     >
-                        <LinkIcon size={14} style={{ display: 'inline', marginRight: 6 }} />
+                        <LinkIcon size={14} style={{ display: 'inline', marginRight: 6 }} aria-hidden="true" />
                         LINK
                     </button>
                     <button
                         className={clsx(styles.tab, activeTab === 'text' && styles.activeTab)}
                         onClick={() => { setActiveTab('text'); setAnalyzedData(null); }}
+                        aria-label="Capture from Text"
                     >
-                        <FileText size={14} style={{ display: 'inline', marginRight: 6 }} />
+                        <FileText size={14} style={{ display: 'inline', marginRight: 6 }} aria-hidden="true" />
                         TEXT
                     </button>
                     <button
                         className={clsx(styles.tab, activeTab === 'file' && styles.activeTab)}
                         onClick={() => { setActiveTab('file'); setAnalyzedData(null); }}
+                        aria-label="Capture from File"
                     >
-                        <Upload size={14} style={{ display: 'inline', marginRight: 6 }} />
+                        <Upload size={14} style={{ display: 'inline', marginRight: 6 }} aria-hidden="true" />
                         FILE
                     </button>
                 </div>
@@ -290,13 +293,14 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
                                         color: '#888',
                                         fontSize: '13px'
                                     }}>
-                                        <Upload size={24} style={{ marginBottom: 8, opacity: 0.7 }} />
+                                        <Upload size={24} style={{ marginBottom: 8, opacity: 0.7 }} aria-hidden="true" />
                                         <span>Click to select image or PDF</span>
                                         <input
                                             type="file"
                                             onChange={handleFileSelect}
                                             style={{ display: 'none' }}
                                             accept="image/*,application/pdf,text/*"
+                                            aria-label="File upload"
                                         />
                                     </label>
                                 ) : (
@@ -320,8 +324,9 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
                                         <button
                                             onClick={() => { setSelectedFile(null); setAnalyzedData(null); }}
                                             style={{ background: 'none', border: 'none', color: '#666', cursor: 'pointer', padding: 4 }}
+                                            aria-label="Remove selected file"
                                         >
-                                            <Trash2 size={14} />
+                                            <Trash2 size={14} aria-hidden="true" />
                                         </button>
                                     </div>
                                 )}
@@ -349,7 +354,7 @@ export default function CaptureModal({ isOpen, onClose, onSave }: CaptureModalPr
                     {analyzedData && (
                         <div className={styles.preview}>
                             <div className={styles.aiHeader}>
-                                <Sparkles size={12} /> AI ANALYSIS
+                                <Sparkles size={12} aria-label="AI Power" /> AI ANALYSIS
                             </div>
 
                             <div className={styles.previewField}>

@@ -16,6 +16,8 @@ import sys
 import json
 from pathlib import Path
 from datetime import datetime
+import platform
+import shutil
 
 # Fix Windows console encoding
 try:
@@ -76,15 +78,31 @@ def run_linter(linter: dict, cwd: Path) -> dict:
         "error": ""
     }
     
+    is_windows = platform.system() == "Windows"
+    cmd = list(linter["cmd"])
+    
+    # Robust command resolution for Windows
+    if is_windows:
+        exe = shutil.which(cmd[0])
+        if not exe:
+            # Try with common Windows extensions if simple which fails
+            for ext in [".cmd", ".bat", ".exe"]:
+                exe = shutil.which(cmd[0] + ext)
+                if exe: break
+        
+        if exe:
+            cmd[0] = exe
+
     try:
         proc = subprocess.run(
-            linter["cmd"],
+            cmd,
             cwd=str(cwd),
             capture_output=True,
             text=True,
             encoding='utf-8',
             errors='replace',
-            timeout=120
+            timeout=120,
+            shell=is_windows
         )
         
         result["output"] = proc.stdout[:2000] if proc.stdout else ""

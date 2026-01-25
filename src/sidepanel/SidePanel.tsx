@@ -3,9 +3,9 @@ import { useEffect, useState, useMemo } from 'react';
 import styles from './SidePanel.module.css';
 import { useCardStore } from '../store/card-store';
 import { formatTimeSince, calculateSystemState } from '../lib/types';
-import type { Category } from '../lib/types';
+import type { Card, Category } from '../lib/types';
 import clsx from 'clsx';
-import { Trash, Play, Clock, AlertTriangle, Plus, Sparkles } from 'lucide-react';
+import { Trash, Play, Clock, AlertTriangle, Plus, Sparkles, BarChart3 } from 'lucide-react';
 import ExecuteMode from '../components/ExecuteMode';
 import CaptureModal from '../components/CaptureModal';
 import OnboardingGuide from '../components/OnboardingGuide';
@@ -26,7 +26,6 @@ export default function SidePanel() {
         startExecuteTimer,
         stopExecute,
         abortExecute,
-        getActiveCards,
         updateCard
     } = useCardStore();
 
@@ -68,10 +67,11 @@ export default function SidePanel() {
 
     // Computed
     const activeCards = useMemo(() => {
-        const allResult = getActiveCards();
-        if (activeFilter === 'All') return allResult;
-        return allResult.filter(c => c.category === activeFilter);
-    }, [cards, getActiveCards, activeFilter]);
+        return cards.filter((c: Card) => {
+            if (activeFilter === 'All') return c.state !== 'discarded';
+            return c.category === activeFilter && c.state !== 'discarded';
+        });
+    }, [cards, activeFilter]);
 
     const activeCard = useMemo(() => cards.find(c => c.id === activeCardId), [cards, activeCardId]);
     const systemState = useMemo(() => calculateSystemState(cards), [cards]);
@@ -88,11 +88,6 @@ export default function SidePanel() {
     const handleCardClick = (id: string) => {
         const card = cards.find(c => c.id === id);
         if (!card) return;
-
-        if (card.state === 'executed') {
-            setActiveCardId(id);
-            return;
-        }
 
         setActiveCardId(id);
         setConfrontationStep('gate');
@@ -163,8 +158,8 @@ export default function SidePanel() {
             <div className={styles.confrontationContainer}>
                 {confrontationStep === 'gate' && (
                     <div className={styles.gate}>
-                        <AlertTriangle size={48} color="var(--color-primary)" />
-                        <h2>WARNING</h2>
+                        <AlertTriangle size={48} color="var(--color-primary)" aria-label="High Tension Warning" />
+                        <h1 className={styles.confrontationTitle}>WARNING</h1>
                         <p>Continuing requires a decision.<br />There is no exit.</p>
                         <button onClick={handleEnterConfrontation} className={styles.dangerButton}>
                             ENTER CONFRONTATION
@@ -177,7 +172,7 @@ export default function SidePanel() {
 
                 {confrontationStep === 'reality' && (
                     <div className={styles.realityCheck}>
-                        <h2>REALITY CHECK</h2>
+                        <h2 className={styles.confrontationTitle}>REALITY CHECK</h2>
                         <div className={styles.realityFacts}>
                             <p>You saved this <strong>{timeSinceCreation}</strong>.</p>
                             <p>In that time, nothing changed.</p>
@@ -205,23 +200,23 @@ export default function SidePanel() {
                             )}
                             {activeCard.aiSummary && (
                                 <div className={styles.aiSummaryPreview}>
-                                    <Sparkles size={10} style={{ display: 'inline', marginRight: 4 }} />
+                                    <Sparkles size={10} style={{ display: 'inline', marginRight: 4 }} aria-label="AI insight" />
                                     {activeCard.aiSummary}
                                 </div>
                             )}
                         </div>
 
                         <div className={styles.buttons}>
-                            <button onClick={handleExecute} className={styles.executeButton}>
-                                <Play size={16} /> EXECUTE
+                            <button onClick={handleExecute} className={styles.executeButton} aria-label="Execute Card">
+                                <Play size={16} aria-hidden="true" /> EXECUTE
                                 <span className={styles.buttonHint}>15 min commitment</span>
                             </button>
-                            <button onClick={handleShadow} className={styles.shadowButton}>
-                                <Clock size={16} /> SHADOW
+                            <button onClick={handleShadow} className={styles.shadowButton} aria-label="Shadow Card">
+                                <Clock size={16} aria-hidden="true" /> SHADOW
                                 <span className={styles.buttonHint}>Loop stays open</span>
                             </button>
-                            <button onClick={handleDiscard} className={styles.discardButton}>
-                                <Trash size={16} /> DISCARD
+                            <button onClick={handleDiscard} className={styles.discardButton} aria-label="Discard Card">
+                                <Trash size={16} aria-hidden="true" /> DISCARD
                                 <span className={styles.buttonHint}>Loop closed forever</span>
                             </button>
                         </div>
@@ -248,11 +243,20 @@ export default function SidePanel() {
                     <span className={clsx(styles.stateIndicator, styles[systemState])}>
                         {systemState.toUpperCase()}
                     </span>
+                    <a
+                        href={chrome.runtime.getURL('dashboard.html')}
+                        target="_blank"
+                        className={styles.dashboardLink}
+                        title="Open Reflection Mirror"
+                        aria-label="Open System Dashboard"
+                    >
+                        <BarChart3 size={14} aria-hidden="true" />
+                    </a>
                 </div>
                 <div className={styles.metrics}>
-                    <span className={styles.globalCount}>{globalCount} CAPTURES</span>
-                    <span className={styles.divider}>|</span>
-                    <span>{openLoopCount} OPEN</span>
+                    <span className={styles.globalCount}>{globalCount}</span>
+                    <span className={styles.divider}>/</span>
+                    <span>{openLoopCount}</span>
                 </div>
             </header>
 
@@ -272,8 +276,8 @@ export default function SidePanel() {
                 ))}
             </div>
 
-            <button onClick={() => setIsCaptureOpen(true)} className={styles.addButton}>
-                <Plus size={14} /> CAPTURE
+            <button onClick={() => setIsCaptureOpen(true)} className={styles.addButton} aria-label="Capture new loop">
+                <Plus size={14} aria-hidden="true" /> CAPTURE
             </button>
 
             <div className={styles.list}>
@@ -332,8 +336,9 @@ export default function SidePanel() {
                                 onClick={(e) => handleDelete(e, card.id)}
                                 className={styles.deleteBtn}
                                 title="Delete Capture"
+                                aria-label="Delete this capture permanently"
                             >
-                                <Trash size={14} />
+                                <Trash size={14} aria-hidden="true" />
                             </button>
                         </div>
                     ))

@@ -57,10 +57,10 @@ export default function OnboardingGuide({ onComplete }: OnboardingGuideProps) {
         <div className={styles.overlay}>
             <div className={styles.modal}>
                 <div className={styles.header}>
-                    <div className={styles.title}>
-                        <Sparkles size={12} />
+                    <h1 className={styles.title}>
+                        <Sparkles size={12} aria-label="Onboarding Progress" />
                         ONBOARDING [{currentStep + 1}/{STEPS.length}]
-                    </div>
+                    </h1>
                 </div>
 
                 <div className={styles.body}>

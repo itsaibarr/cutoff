@@ -55,13 +55,16 @@ export default function Popup() {
             ) : (
                 <>
                     <header className={styles.header}>
-                        <span className={styles.brand}>CUTOFF</span>
-                        <span className={styles.indicator}>●</span>
+                        <h1 className={styles.brand}>CUTOFF</h1>
+                        <span className={styles.indicator} aria-hidden="true">●</span>
                     </header>
 
                     <form onSubmit={handleSubmit} className={styles.form}>
                         <div className={styles.inputWrapper}>
-                            {input.startsWith('http') ? <Link size={16} /> : <FileText size={16} />}
+                            {input.startsWith('http') ?
+                                <Link size={16} aria-label="Link detected" /> :
+                                <FileText size={16} aria-label="Text detected" />
+                            }
                             <input
                                 type="text"
                                 value={input}
@@ -80,8 +83,9 @@ export default function Popup() {
                                 type="submit"
                                 disabled={!input.trim()}
                                 className={clsx(styles.submitButton, input.trim() && styles.active)}
+                                aria-label="Save to Cutoff"
                             >
-                                <ArrowRight size={20} />
+                                <ArrowRight size={20} aria-hidden="true" />
                             </button>
                         </div>
                     </form>

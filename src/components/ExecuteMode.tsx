@@ -140,7 +140,7 @@ export default function ExecuteMode({ card, onStop, onAbort, onStartTimer, onUpd
         const enforcer = setInterval(checkFocus, 1000);
         return () => clearInterval(enforcer);
         // Only re-run when these core things change
-    }, [timerStarted, card.executeStartedAt, allowedDomains, card.allowedDomains, breachDetected, breachSite]);
+    }, [timerStarted, card.executeStartedAt, allowedDomains, card.allowedDomains, breachDetected, breachSite, timeRemaining]);
 
     const handleStartTimer = useCallback(() => {
         if (onUpdateCard) {
@@ -182,8 +182,8 @@ export default function ExecuteMode({ card, onStop, onAbort, onStartTimer, onUpd
         return (
             <div className={styles.container} style={{ borderColor: 'var(--color-danger)' }}>
                 <div className={styles.breachOverlay}>
-                    <ShieldAlert size={64} color="var(--color-danger)" />
-                    <h1 style={{ color: 'var(--color-danger)', marginTop: 16 }}>FOCUS BREACH</h1>
+                    <ShieldAlert size={64} color="var(--color-danger)" aria-label="Security Breach Alert" />
+                    <h2 style={{ color: 'var(--color-danger)', marginTop: 16 }}>FOCUS BREACH</h2>
                     <p>You strayed to <strong>{breachSite}</strong>.</p>
                     <p style={{ opacity: 0.7, marginTop: 8 }}>Go back to your task to resume.</p>
 
@@ -203,14 +203,14 @@ export default function ExecuteMode({ card, onStop, onAbort, onStartTimer, onUpd
         return (
             <div className={styles.container}>
                 <header className={styles.header}>
-                    <h1>FOCUS SETUP</h1>
+                    <h1 className={styles.title}>FOCUS SETUP</h1>
                     <p className={styles.subtitle}>Define your boundaries.</p>
                 </header>
 
                 <div className={styles.content}>
                     <div className={styles.whitelistSection}>
                         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, color: 'var(--color-text-secondary)' }}>
-                            <Shield size={14} style={{ marginRight: 8 }} />
+                            <Shield size={14} style={{ marginRight: 8 }} aria-label="Privacy Filter" />
                             <span style={{ fontSize: 13 }}>ALLOWED SITES</span>
                         </div>
 
@@ -218,7 +218,7 @@ export default function ExecuteMode({ card, onStop, onAbort, onStartTimer, onUpd
                             {allowedDomains.map(domain => (
                                 <div key={domain} className={styles.domainTag} onClick={() => toggleDomain(domain)}>
                                     <span>{domain}</span>
-                                    <XCircle size={12} style={{ marginLeft: 6, opacity: 0.5 }} />
+                                    <XCircle size={12} style={{ marginLeft: 6, opacity: 0.5 }} aria-label="Remove domain" />
                                 </div>
                             ))}
                             {allowedDomains.length === 0 && (
@@ -247,8 +247,8 @@ export default function ExecuteMode({ card, onStop, onAbort, onStartTimer, onUpd
                 </div>
 
                 <div className={styles.actions}>
-                    <button onClick={handleStartTimer} className={styles.startButton}>
-                        <Lock size={14} style={{ marginRight: 8 }} />
+                    <button onClick={handleStartTimer} className={styles.startButton} aria-label="Lock system and start timer">
+                        <Lock size={14} style={{ marginRight: 8 }} aria-hidden="true" />
                         LOCK & START
                     </button>
                 </div>
@@ -260,11 +260,11 @@ export default function ExecuteMode({ card, onStop, onAbort, onStartTimer, onUpd
     return (
         <div className={styles.container}>
             <header className={styles.header}>
-                <h1>EXECUTE MODE</h1>
+                <h2 className={styles.title}>EXECUTE MODE</h2>
                 <p className={styles.subtitle}>
                     {allowedDomains.length > 0 ? (
                         <span style={{ color: 'var(--color-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                            <Shield size={12} /> RESTRICTED
+                            <Shield size={12} aria-hidden="true" /> RESTRICTED
                         </span>
                     ) : 'Limited commitment'}
                 </p>

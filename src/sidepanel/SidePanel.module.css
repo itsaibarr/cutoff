@@ -18,60 +18,72 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 100px;
+    height: 150px;
     pointer-events: none;
-    transition: all 1s ease;
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 0;
-    opacity: 0.3;
+    opacity: 0.5;
 }
 
 .state_void {
-    background: #050505;
+    background: #020202;
 }
 
 .state_void::before {
-    background: radial-gradient(circle at top, #111, transparent);
+    background: radial-gradient(circle at top, #080808, transparent 70%);
+    opacity: 0.2;
 }
 
 .state_stable {
-    background: #080808;
+    background: #050505;
 }
 
 .state_stable::before {
-    background: radial-gradient(circle at top, #222, transparent);
+    background: radial-gradient(circle at top, #111, transparent 80%);
 }
 
 .state_turbulent {
-    background: #0a0a05;
+    background: #080800;
 }
 
 .state_turbulent::before {
-    background: radial-gradient(circle at top, rgba(191, 255, 0, 0.1), transparent);
+    background: radial-gradient(circle at top, rgba(191, 255, 0, 0.15), transparent 90%);
 }
 
 .state_critical {
-    background: #0a0505;
-    box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.05);
+    background: #0a0000;
+    animation: criticalBg 4s infinite alternate ease-in-out;
 }
 
 .state_critical::before {
-    background: radial-gradient(circle at top, rgba(255, 0, 0, 0.15), transparent);
+    background: radial-gradient(circle at top, rgba(255, 0, 0, 0.25), transparent 100%);
+    opacity: 0.8;
+}
+
+@keyframes criticalBg {
+    from {
+        box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.05);
+    }
+
+    to {
+        box-shadow: inset 0 0 80px rgba(255, 0, 0, 0.1);
+    }
 }
 
 .state_focused {
-    background: #050a0a;
+    background: #000808;
 }
 
 .state_focused::before {
-    background: radial-gradient(circle at top, rgba(0, 255, 255, 0.1), transparent);
+    background: radial-gradient(circle at top, rgba(0, 255, 255, 0.2), transparent 100%);
 }
 
 .state_deferred {
-    background: #0a0a08;
+    background: #080500;
 }
 
 .state_deferred::before {
-    background: radial-gradient(circle at top, rgba(100, 50, 0, 0.1), transparent);
+    background: radial-gradient(circle at top, rgba(150, 80, 0, 0.15), transparent 90%);
 }
 
 .header {
@@ -127,6 +139,26 @@
     font-family: monospace;
     font-size: 14px;
     letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dashboardLink {
+    color: #888;
+    opacity: 0.8;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.dashboardLink:hover {
+    color: #fff;
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .stateIndicator {

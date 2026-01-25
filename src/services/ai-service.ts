@@ -167,7 +167,7 @@ export class AIService {
     private async tryModel(model: string, prompt: string, key: string, fileData?: { mimeType: string, data: string }): Promise<AIAnalysisResult> {
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
 
-        const parts: any[] = [{ text: prompt }];
+        const parts: { text?: string; inlineData?: { mimeType: string; data: string } }[] = [{ text: prompt }];
 
         if (fileData) {
             parts.push({
