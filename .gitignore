@@ -7,23 +7,50 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+
+# Build outputs
 dist
 dist-ssr
 *.local
+*.crx
+*.pem
+*.zip
+
+# Environment variables - NEVER commit secrets
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
 
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-# Environment variables - NEVER commit secrets
-.env
-.env.local
-.env.*.local
+# OS files
+.DS_Store
+Thumbs.db
+*.DS_Store
+
+# Agent/AI folders (dev only)
+.agent
+
+# Test coverage
+coverage
+*.lcov
+
+# Cache
+.cache
+.parcel-cache
+.turbo
+
+# TypeScript
+*.tsbuildinfo
